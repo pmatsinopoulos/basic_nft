@@ -18,7 +18,8 @@ contract BasicNftTest is Test {
     //                            //
     ////////////////////////////////
 
-    /// Test balanceOf
+    // -------------------------------
+    // Test balanceOf
 
     function test_balanceOf_whenAddressGivenDoesNotOwnAnNft_itReturns_0()
         public
@@ -61,4 +62,97 @@ contract BasicNftTest is Test {
         vm.expectRevert(BasicNft.AddressZeroNotAllowedToOwnNft.selector);
         basicNft.balanceOf(zero);
     }
+    // -------------------------------
+
+    // -----------------------------
+    // Test mintNft
+
+    function test_mintNft_whenNotCalledByOwner_itReverts() public {
+        // setup
+        address peter = makeAddr("peter");
+        address notOwner = makeAddr("notOwner");
+
+        // fire
+        vm.expectRevert(
+            abi.encodeWithSelector(BasicNft.OnlyOwnerCanMint.selector, notOwner)
+        );
+        vm.prank(notOwner);
+        basicNft.mintNft(peter);
+    }
+
+    function test_mintNft_whenThereIsNoNftLeftToMint_itReverts() public {
+        address peter = makeAddr("peter");
+        basicNft.setAllNftsMinted(true);
+
+        // fire
+        vm.expectRevert(BasicNft.NoMoreNftsLeftToMint.selector);
+        basicNft.mintNft(peter);
+    }
+
+    function test_mintNft_assignsNewNftToAddress() public {
+        // setup
+
+        address peter = makeAddr("peter");
+        uint256 balanceBefore = basicNft.balanceOf(peter);
+
+        // fire
+
+        basicNft.mintNft(peter);
+        uint256 balanceAfter = basicNft.balanceOf(peter);
+        assertEq(balanceAfter, balanceBefore + 1);
+    }
+
+    function test_mintNft_emitsTransferEvent() public {
+        // setup
+        address peter = makeAddr("peter");
+
+        // fire
+        vm.expectEmit(true, true, true, false, address(basicNft));
+        emit BasicNft.Transfer(address(0), peter, 0);
+        basicNft.mintNft(peter);
+    }
+
+    function test_mintNft_makesAddressTheOwner() public {
+        address peter = makeAddr("peter");
+
+        // fire
+        basicNft.mintNft(peter);
+
+        assertEq(basicNft.ownerOf(0), peter);
+    }
+
+    // -------------------------------
+    // Test ownerOf
+
+    function test_ownerOf_whenTokenGivenBelongsToAnAddress_theOwnerAddressIsReturned()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter);
+        basicNft.mintNft(peter);
+        uint256 tokenId = 1;
+
+        // fire
+        address result = basicNft.ownerOf(tokenId);
+
+        assertEq(result, peter);
+    }
+
+    function test_ownerOf_whenTokenGivenDoesNotBelongToAnAddress_itReverts()
+        public
+    {
+        uint256 tokenId = 25;
+
+        // fire
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                BasicNft.TokenGivenIsNotOwned.selector,
+                tokenId
+            )
+        );
+        basicNft.ownerOf(tokenId);
+    }
+
+    // -------------------------------
 }
