@@ -155,4 +155,433 @@ contract BasicNftTest is Test {
     }
 
     // -------------------------------
+
+    // -------------------------------
+    // Test safeTransferFrom() without data argument
+
+    function test_safeTransferFrom_whenSenderIsCurrentOwner_transfersTheOwnershipOfAnNftFromOneAddressToAnother()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        address panos = makeAddr("panos");
+        basicNft.mintNft(peter);
+        uint256 tokenId = 0;
+
+        // fire
+        vm.expectEmit(true, true, true, false, address(basicNft));
+        emit BasicNft.Transfer(peter, panos, tokenId);
+        vm.prank(peter);
+        basicNft.safeTransferFrom(peter, panos, tokenId);
+    }
+
+    function test_safeTransferFrom_whenMsgSenderIsNotCurrentOwnerNeitherAuthorizedOperatorNorApprovedAddress_itReverts()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter); // peter owns tokenId 0
+
+        address panos = makeAddr("panos");
+
+        // fire
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                BasicNft
+                    .SenderNotOwnerNorAuthorizedOperatorNorApprovedAddress
+                    .selector,
+                address(this),
+                panos,
+                peter,
+                0
+            )
+        );
+        basicNft.safeTransferFrom(panos, peter, 0);
+    }
+
+    function test_safeTransferFrom_whenMsgSenderIsAuthorizedOperator_itDoesTheTransfer()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter); // peter owns tokenId 0
+        address panos = makeAddr("panos");
+        address authorizedOperator = makeAddr("authorizedOperator");
+        vm.prank(peter);
+        basicNft.setApprovalForAll(authorizedOperator, true);
+
+        // fire
+        vm.expectEmit(true, true, true, false, address(basicNft));
+        emit BasicNft.Transfer(peter, panos, 0);
+
+        vm.prank(authorizedOperator);
+        basicNft.safeTransferFrom(peter, panos, 0);
+    }
+
+    function test_safeTransferFrom_whenMsgSenderIsAnApprovedAddress_itDoesTheTransfer()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter); // peter owns tokenId 0
+
+        address panos = makeAddr("panos");
+        address approvedAddress = makeAddr("approvedAddress");
+        vm.prank(peter);
+        basicNft.approve(approvedAddress, 0);
+
+        // fire
+        vm.expectEmit(true, true, true, false, address(basicNft));
+        emit BasicNft.Transfer(peter, panos, 0);
+        vm.prank(approvedAddress);
+        basicNft.safeTransferFrom(peter, panos, 0);
+    }
+
+    function test_safeTransferFrom_whenToIsZeroAddress_itReverts() public {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter); // peter owns tokenId 0
+
+        // fire
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                BasicNft.TransferToAddressZeroNotAllowed.selector
+            )
+        );
+        vm.prank(peter);
+        basicNft.safeTransferFrom(peter, address(0), 0);
+    }
+
+    function test_safeTransferFrom_whenTokenIdIsNotValid_itReverts() public {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter); // peter owns tokenId 0
+        address panos = makeAddr("panos");
+
+        // fire
+        vm.expectRevert(
+            abi.encodeWithSelector(BasicNft.InvalidNft.selector, 1)
+        );
+        basicNft.safeTransferFrom(peter, panos, 1);
+    }
+
+    function test_safeTransferFrom_whenToIsSmartContractThatDoesNotImplementOnERC721Received_itReverts()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter);
+        InvalidSmartContract invalidSmartContract = new InvalidSmartContract();
+
+        // fire
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                BasicNft.TransferToSmartContractFailed.selector,
+                address(invalidSmartContract)
+            )
+        );
+        vm.prank(peter);
+        basicNft.safeTransferFrom(peter, address(invalidSmartContract), 0);
+    }
+
+    function test_safeTransferFrom_whenToIsSmartContractThatDoesNotReturnCorrectData_itReverts()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter);
+        InvalidSmartContractWrongData invalidSmartContract = new InvalidSmartContractWrongData();
+
+        // fire
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                BasicNft.TransferToSmartContractWrongDataReturned.selector,
+                address(invalidSmartContract),
+                bytes4(0xeeafbddc)
+            )
+        );
+        vm.prank(peter);
+        basicNft.safeTransferFrom(peter, address(invalidSmartContract), 0);
+    }
+
+    // -------------------------------
+
+    // test safeTransferFrom() with data
+
+    function test_safeTransferFrom_withData_whenSenderIsCurrentOwner_transfersTheOwnershipOfAnNftFromOneAddressToAnother()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        address panos = makeAddr("panos");
+        basicNft.mintNft(peter);
+        uint256 tokenId = 0;
+
+        // fire
+        vm.expectEmit(true, true, true, false, address(basicNft));
+        emit BasicNft.Transfer(peter, panos, tokenId);
+        vm.prank(peter);
+        basicNft.safeTransferFrom(
+            peter,
+            panos,
+            tokenId,
+            abi.encode("Hello World")
+        );
+    }
+
+    function test_safeTransferFrom_withData_whenMsgSenderIsNotCurrentOwnerNeitherAuthorizedOperatorNorApprovedAddress_itReverts()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter); // peter owns tokenId 0
+
+        address panos = makeAddr("panos");
+
+        // fire
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                BasicNft
+                    .SenderNotOwnerNorAuthorizedOperatorNorApprovedAddress
+                    .selector,
+                address(this),
+                panos,
+                peter,
+                0
+            )
+        );
+        basicNft.safeTransferFrom(panos, peter, 0, abi.encode("Hello World"));
+    }
+
+    function test_safeTransferFrom_withData_whenMsgSenderIsAuthorizedOperator_itDoesTheTransfer()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter); // peter owns tokenId 0
+        address panos = makeAddr("panos");
+        address authorizedOperator = makeAddr("authorizedOperator");
+        vm.prank(peter);
+        basicNft.setApprovalForAll(authorizedOperator, true);
+
+        // fire
+        vm.expectEmit(true, true, true, false, address(basicNft));
+        emit BasicNft.Transfer(peter, panos, 0);
+
+        vm.prank(authorizedOperator);
+        basicNft.safeTransferFrom(peter, panos, 0, abi.encode("Hello World"));
+    }
+
+    function test_safeTransferFrom_withData_whenMsgSenderIsAnApprovedAddress_itDoesTheTransfer()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter); // peter owns tokenId 0
+
+        address panos = makeAddr("panos");
+        address approvedAddress = makeAddr("approvedAddress");
+        vm.prank(peter);
+        basicNft.approve(approvedAddress, 0);
+
+        // fire
+        vm.expectEmit(true, true, true, false, address(basicNft));
+        emit BasicNft.Transfer(peter, panos, 0);
+        vm.prank(approvedAddress);
+        basicNft.safeTransferFrom(peter, panos, 0, abi.encode("Hello World"));
+    }
+
+    function test_safeTransferFrom_withData_whenToIsZeroAddress_itReverts()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter); // peter owns tokenId 0
+
+        // fire
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                BasicNft.TransferToAddressZeroNotAllowed.selector
+            )
+        );
+        vm.prank(peter);
+        basicNft.safeTransferFrom(
+            peter,
+            address(0),
+            0,
+            abi.encode("Hello World")
+        );
+    }
+
+    function test_safeTransferFrom_withData_whenTokenIdIsNotValid_itReverts()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter); // peter owns tokenId 0
+        address panos = makeAddr("panos");
+
+        // fire
+        vm.expectRevert(
+            abi.encodeWithSelector(BasicNft.InvalidNft.selector, 1)
+        );
+        basicNft.safeTransferFrom(peter, panos, 1, abi.encode("Hello World"));
+    }
+
+    function test_safeTransferFrom_withData_whenToIsSmartContract_itCallsOnERC721Received()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter);
+        SmartContract smartContract = new SmartContract();
+
+        // fire
+        vm.prank(peter);
+        basicNft.safeTransferFrom(
+            peter,
+            address(smartContract),
+            0,
+            abi.encode("Hello World")
+        );
+
+        bool called = smartContract.called();
+        assertTrue(called, "onERC721Received was not called");
+
+        address from = smartContract.from();
+        assertEq(from, peter, "from is not correct");
+
+        address operator = smartContract.operator();
+        assertEq(operator, peter, "operator is not correct");
+
+        uint256 tokenId = smartContract.tokenId();
+        assertEq(tokenId, 0, "tokenId is not correct");
+
+        bytes memory data = smartContract.data();
+        assertEq(data, abi.encode("Hello World"), "data is not correct");
+    }
+
+    function test_safeTransferFrom_withData_whenToIsSmartContractThatDoesNotImplementOnERC721Received_itReverts()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter);
+        InvalidSmartContract invalidSmartContract = new InvalidSmartContract();
+
+        // fire
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                BasicNft.TransferToSmartContractFailed.selector,
+                address(invalidSmartContract)
+            )
+        );
+        vm.prank(peter);
+        basicNft.safeTransferFrom(
+            peter,
+            address(invalidSmartContract),
+            0,
+            abi.encode("Hello World")
+        );
+    }
+
+    function test_safeTransferFrom_withData_whenToIsSmartContractThatDoesNotReturnCorrectData_itReverts()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter);
+        InvalidSmartContractWrongData invalidSmartContract = new InvalidSmartContractWrongData();
+
+        // fire
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                BasicNft.TransferToSmartContractWrongDataReturned.selector,
+                address(invalidSmartContract),
+                bytes4(0xeeafbddc)
+            )
+        );
+        vm.prank(peter);
+        basicNft.safeTransferFrom(
+            peter,
+            address(invalidSmartContract),
+            0,
+            abi.encode("Hello World")
+        );
+    }
+}
+
+contract SmartContract {
+    bool s_called;
+    address s_from;
+    address s_operator;
+    uint256 s_tokenId;
+    bytes s_data;
+
+    constructor() {
+        s_called = false;
+        s_operator = address(0);
+        s_tokenId = 0;
+    }
+
+    function onERC721Received(
+        address _operator,
+        address _from,
+        uint256 _tokenId,
+        bytes memory _data
+    ) external returns (bytes4) {
+        s_called = true;
+        s_from = _from;
+        s_operator = _operator;
+        s_tokenId = _tokenId;
+        s_data = _data;
+        return
+            bytes4(
+                keccak256("onERC721Received(address,address,uint256,bytes)")
+            );
+    }
+
+    function called() external view returns (bool) {
+        return s_called;
+    }
+
+    function from() external view returns (address) {
+        return s_from;
+    }
+
+    function operator() external view returns (address) {
+        return s_operator;
+    }
+
+    function tokenId() external view returns (uint256) {
+        return s_tokenId;
+    }
+
+    function data() external view returns (bytes memory) {
+        return s_data;
+    }
+}
+
+contract InvalidSmartContract {}
+
+contract InvalidSmartContractWrongData {
+    bool s_called;
+
+    constructor() {
+        s_called = false;
+    }
+
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes memory
+    ) external returns (bytes4) {
+        s_called = true;
+        return 0xeeafbddc;
+    }
+
+    function called() external view returns (bool) {
+        return s_called;
+    }
 }

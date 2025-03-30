@@ -12,6 +12,13 @@ contract BasicNft {
 
     mapping(address _nftOwner => uint256 _nftOwnerBalance) private s_balances;
     mapping(uint256 _tokenId => address _nftOwner) private s_owners;
+    mapping(address _nftOwner => mapping(address _operator => bool _approvedFlag))
+        private s_approvalsForAll;
+    mapping(address _nftOwner => mapping(address _approvedAddress => mapping(uint256 _tokenId => bool _approvedFlag)))
+        private s_approvals;
+
+    bytes4 internal constant SAFE_TRANSFER_FROM_SMART_CONTRACT_RETURN_VALUE =
+        bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"));
 
     event Transfer(
         address indexed _from,
@@ -25,6 +32,19 @@ contract BasicNft {
     error AddressZeroNotAllowedToOwnNft();
     error NoMoreNftsLeftToMint();
     error TokenGivenIsNotOwned(uint256 _tokenId);
+    error SenderNotOwnerNorAuthorizedOperatorNorApprovedAddress(
+        address _sender,
+        address _from,
+        address _to,
+        uint256 _tokenId
+    );
+    error TransferToAddressZeroNotAllowed();
+    error InvalidNft(uint256 _tokenId);
+    error TransferToSmartContractFailed(address _to);
+    error TransferToSmartContractWrongDataReturned(
+        address _to,
+        bytes4 _returnedValue
+    );
 
     constructor() {
         s_owner = msg.sender;
@@ -46,9 +66,9 @@ contract BasicNft {
             revert NoMoreNftsLeftToMint();
         }
 
-        uint256 l_tokenId = s_firstFreeTokenId;
+        uint256 tokenId = s_firstFreeTokenId;
 
-        s_owners[l_tokenId] = _to;
+        s_owners[tokenId] = _to;
 
         s_balances[_to]++;
 
@@ -58,7 +78,7 @@ contract BasicNft {
             s_firstFreeTokenId++;
         }
 
-        emit Transfer(address(0), _to, l_tokenId);
+        emit Transfer(address(0), _to, tokenId);
     }
 
     function setFirstFreeTokenId(uint256 _firstFreeTokenId) external {
@@ -92,6 +112,88 @@ contract BasicNft {
         return s_owners[_tokenId];
     }
 
+    function safeTransferFrom(
+        address _from,
+        address _to,
+        uint256 _tokenId
+    ) external payable {
+        safeTransferFrom(_from, _to, _tokenId, "");
+    }
+
+    function safeTransferFrom(
+        address _from,
+        address _to,
+        uint256 _tokenId,
+        bytes memory data
+    ) public payable {
+        if (_to == address(0)) {
+            revert TransferToAddressZeroNotAllowed();
+        }
+
+        if (_tokenId >= s_firstFreeTokenId) {
+            revert InvalidNft(_tokenId);
+        }
+
+        address currentOwner = s_owners[_tokenId];
+        bool authorizedOperator = s_approvalsForAll[_from][msg.sender] == true;
+        bool approvedAddress = s_approvals[_from][msg.sender][_tokenId] == true;
+
+        if (
+            msg.sender != currentOwner &&
+            !authorizedOperator &&
+            !approvedAddress
+        ) {
+            revert SenderNotOwnerNorAuthorizedOperatorNorApprovedAddress(
+                msg.sender,
+                _from,
+                _to,
+                _tokenId
+            );
+        }
+
+        s_owners[_tokenId] = _to;
+        s_balances[_from]--;
+        s_balances[_to]++;
+
+        if (_isContract(_to)) {
+            (bool success, bytes memory returnData) = _to.call(
+                abi.encodeWithSignature(
+                    "onERC721Received(address,address,uint256,bytes)",
+                    msg.sender,
+                    _from,
+                    _tokenId,
+                    data
+                )
+            );
+
+            if (!success) {
+                revert TransferToSmartContractFailed(_to);
+            }
+
+            bytes4 returnedValue = abi.decode(returnData, (bytes4));
+            if (
+                returnedValue != SAFE_TRANSFER_FROM_SMART_CONTRACT_RETURN_VALUE
+            ) {
+                revert TransferToSmartContractWrongDataReturned(
+                    _to,
+                    returnedValue
+                );
+            }
+        }
+
+        emit Transfer(_from, _to, _tokenId);
+    }
+
+    function setApprovalForAll(address _operator, bool _approved) external {
+        s_approvalsForAll[msg.sender][_operator] = _approved;
+        // emit ApprovalForAll(msg.sender, _operator, _approved);
+    }
+
+    function approve(address _approved, uint256 _tokenId) external {
+        s_approvals[msg.sender][_approved][_tokenId] = true;
+        // emit Approval(msg.sender, _approved, _tokenId);
+    }
+
     // function mintNft() public {}
 
     // function tokenURI(
@@ -109,4 +211,12 @@ contract BasicNft {
     // function _baseURI() internal view virtual returns (string memory) {
     // return "https://foo.bar.com/nfts/dogie/";
     // }
+
+    function _isContract(address _addr) internal view returns (bool) {
+        uint256 size;
+        assembly {
+            size := extcodesize(_addr)
+        }
+        return size > 0;
+    }
 }
