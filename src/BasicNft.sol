@@ -126,34 +126,7 @@ contract BasicNft {
         uint256 _tokenId,
         bytes memory data
     ) public payable {
-        if (_to == address(0)) {
-            revert TransferToAddressZeroNotAllowed();
-        }
-
-        if (_tokenId >= s_firstFreeTokenId) {
-            revert InvalidNft(_tokenId);
-        }
-
-        address currentOwner = s_owners[_tokenId];
-        bool authorizedOperator = s_approvalsForAll[_from][msg.sender] == true;
-        bool approvedAddress = s_approvals[_from][msg.sender][_tokenId] == true;
-
-        if (
-            msg.sender != currentOwner &&
-            !authorizedOperator &&
-            !approvedAddress
-        ) {
-            revert SenderNotOwnerNorAuthorizedOperatorNorApprovedAddress(
-                msg.sender,
-                _from,
-                _to,
-                _tokenId
-            );
-        }
-
-        s_owners[_tokenId] = _to;
-        s_balances[_from]--;
-        s_balances[_to]++;
+        _transferFrom(_from, _to, _tokenId);
 
         if (_isContract(_to)) {
             (bool success, bytes memory returnData) = _to.call(
@@ -180,6 +153,16 @@ contract BasicNft {
                 );
             }
         }
+
+        emit Transfer(_from, _to, _tokenId);
+    }
+
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _tokenId
+    ) external payable {
+        _transferFrom(_from, _to, _tokenId);
 
         emit Transfer(_from, _to, _tokenId);
     }
@@ -218,5 +201,40 @@ contract BasicNft {
             size := extcodesize(_addr)
         }
         return size > 0;
+    }
+
+    function _transferFrom(
+        address _from,
+        address _to,
+        uint256 _tokenId
+    ) internal {
+        if (_to == address(0)) {
+            revert TransferToAddressZeroNotAllowed();
+        }
+
+        if (_tokenId >= s_firstFreeTokenId) {
+            revert InvalidNft(_tokenId);
+        }
+
+        address currentOwner = s_owners[_tokenId];
+        bool authorizedOperator = s_approvalsForAll[_from][msg.sender] == true;
+        bool approvedAddress = s_approvals[_from][msg.sender][_tokenId] == true;
+
+        if (
+            msg.sender != currentOwner &&
+            !authorizedOperator &&
+            !approvedAddress
+        ) {
+            revert SenderNotOwnerNorAuthorizedOperatorNorApprovedAddress(
+                msg.sender,
+                _from,
+                _to,
+                _tokenId
+            );
+        }
+
+        s_owners[_tokenId] = _to;
+        s_balances[_from]--;
+        s_balances[_to]++;
     }
 }

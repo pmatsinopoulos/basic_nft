@@ -509,6 +509,116 @@ contract BasicNftTest is Test {
             abi.encode("Hello World")
         );
     }
+
+    // -------------------------------
+    // Test transferFrom()
+
+    function test_transferFrom_whenSenderIsCurrentOwner_transfersTheOwnershipOfAnNftFromOneAddressToAnother()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        address panos = makeAddr("panos");
+        basicNft.mintNft(peter);
+        uint256 tokenId = 0;
+
+        // fire
+        vm.expectEmit(true, true, true, false, address(basicNft));
+        emit BasicNft.Transfer(peter, panos, tokenId);
+        vm.prank(peter);
+        basicNft.transferFrom(peter, panos, tokenId);
+    }
+
+    function test_transferFrom_whenMsgSenderIsNotCurrentOwnerNeitherAuthorizedOperatorNorApprovedAddress_itReverts()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter); // peter owns tokenId 0
+
+        address panos = makeAddr("panos");
+
+        // fire
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                BasicNft
+                    .SenderNotOwnerNorAuthorizedOperatorNorApprovedAddress
+                    .selector,
+                address(this),
+                panos,
+                peter,
+                0
+            )
+        );
+        basicNft.transferFrom(panos, peter, 0);
+    }
+
+    function test_transferFrom_whenMsgSenderIsAuthorizedOperator_itDoesTheTransfer()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter); // peter owns tokenId 0
+        address panos = makeAddr("panos");
+        address authorizedOperator = makeAddr("authorizedOperator");
+        vm.prank(peter);
+        basicNft.setApprovalForAll(authorizedOperator, true);
+
+        // fire
+        vm.expectEmit(true, true, true, false, address(basicNft));
+        emit BasicNft.Transfer(peter, panos, 0);
+
+        vm.prank(authorizedOperator);
+        basicNft.transferFrom(peter, panos, 0);
+    }
+
+    function test_transferFrom_whenMsgSenderIsAnApprovedAddress_itDoesTheTransfer()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter); // peter owns tokenId 0
+
+        address panos = makeAddr("panos");
+        address approvedAddress = makeAddr("approvedAddress");
+        vm.prank(peter);
+        basicNft.approve(approvedAddress, 0);
+
+        // fire
+        vm.expectEmit(true, true, true, false, address(basicNft));
+        emit BasicNft.Transfer(peter, panos, 0);
+        vm.prank(approvedAddress);
+        basicNft.transferFrom(peter, panos, 0);
+    }
+
+    function test_transferFrom_whenToIsZeroAddress_itReverts() public {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter); // peter owns tokenId 0
+
+        // fire
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                BasicNft.TransferToAddressZeroNotAllowed.selector
+            )
+        );
+        vm.prank(peter);
+        basicNft.transferFrom(peter, address(0), 0);
+    }
+
+    function test_transferFrom_whenTokenIdIsNotValid_itReverts() public {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter); // peter owns tokenId 0
+        address panos = makeAddr("panos");
+
+        // fire
+        vm.expectRevert(
+            abi.encodeWithSelector(BasicNft.InvalidNft.selector, 1)
+        );
+        basicNft.transferFrom(peter, panos, 1);
+    }
+    // -------------------------------
 }
 
 contract SmartContract {
