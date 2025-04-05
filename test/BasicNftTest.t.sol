@@ -674,7 +674,12 @@ contract BasicNftTest is Test {
         basicNft.approve(panos, 0);
     }
 
-    function test_approve_whenMsgSenderIsAnApprovedAddress_approvesAndEmitsEvent()
+    // The standard specifies that `approve` should throw unless `msg.sender` is the current NFT owner
+    // or an authorized operator. It does not allow an approved address for a specific token to call `approve`.
+    // This is distinct from the rules for `transfer`, which allow an approved address to transfer the token.
+    // This distinction is intentional in the standard and not a conflict.
+    //
+    function test_approve_whenMsgSenderIsAnApprovedAddressForTheGivenToken_itReverts()
         public
     {
         // setup
@@ -687,8 +692,16 @@ contract BasicNftTest is Test {
         basicNft.approve(approvedAddress, 0);
 
         // fire
-        vm.expectEmit(true, true, true, false, address(basicNft));
-        emit BasicNft.Approval(peter, panos, 0);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                BasicNft
+                    .ApprovalSenderNotOwnerNorAuthorizedOperatorNorApprovedAddress
+                    .selector,
+                address(approvedAddress),
+                address(peter),
+                0
+            )
+        );
         vm.prank(approvedAddress);
         basicNft.approve(panos, 0);
     }
@@ -711,6 +724,26 @@ contract BasicNftTest is Test {
 
         address approvedAddress = basicNft.getApproved(1);
         assertEq(approvedAddress, address(0), "approvedAddress is not correct");
+    }
+
+    // a given NFT can have only one approved address at a time.
+    //
+    function test_approve_changesTheApprovedAddressForTheGivenNft() public {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter); // peter owns tokenId 0
+        address oldApprovedAddress = makeAddr("oldApprovedAddress");
+
+        vm.prank(peter);
+        basicNft.approve(oldApprovedAddress, 0); // oldApprovedAddress is approved for tokenId 0
+
+        address newApprovedAddress = makeAddr("newApprovedAddress");
+
+        // fire
+        vm.prank(peter);
+        basicNft.approve(newApprovedAddress, 0);
+
+        assertEq(basicNft.getApproved(0), newApprovedAddress);
     }
 
     //--------------------------------

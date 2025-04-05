@@ -32,7 +32,7 @@ contract BasicNft {
 
     event Approval(
         address indexed _owner,
-        address indexed _to,
+        address indexed _approved,
         uint256 indexed _tokenId
     );
 
@@ -215,14 +215,6 @@ contract BasicNft {
     }
 
     function approve(address _approved, uint256 _tokenId) external {
-        // if (_to == address(0)) {
-        //     revert TransferToAddressZeroNotAllowed();
-        // }
-
-        // if (_tokenId >= s_firstFreeTokenId) {
-        //     revert InvalidNft(_tokenId);
-        // }
-
         address currentOwner = s_owners[_tokenId];
         bool authorizedOperator = s_approvalsForAll[currentOwner][msg.sender] ==
             true;
@@ -240,10 +232,6 @@ contract BasicNft {
     }
 
     function getApproved(uint256 _tokenId) external view returns (address) {
-        // if (s_owners[_tokenId] == address(0)) {
-        // revert TokenGivenIsNotOwned(_tokenId);
-        // }
-        //
         if (_tokenId >= s_firstFreeTokenId) {
             revert InvalidNft(_tokenId);
         }
