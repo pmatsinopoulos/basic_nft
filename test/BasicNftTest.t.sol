@@ -783,6 +783,49 @@ contract BasicNftTest is Test {
     }
 
     // --------------------------------
+
+    // --------------------------------
+    // Test getApproved()
+
+    function test_getApproved_returnsTheApprovedAddressForTheGivenNft() public {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter); // peter owns tokenId 0
+        address panos = makeAddr("panos");
+        vm.prank(peter);
+        basicNft.approve(panos, 0);
+
+        // fire
+        address approvedAddress = basicNft.getApproved(0);
+
+        assertEq(
+            approvedAddress,
+            panos,
+            "approvedAddress should have been panos"
+        );
+    }
+
+    function test_getApproved_whenTokenIdIsNotValid_itReverts() public {
+        // fire
+        vm.expectRevert(
+            abi.encodeWithSelector(BasicNft.InvalidNft.selector, 0)
+        );
+        basicNft.getApproved(0); // 0 is invalid it has not been minted yet
+    }
+
+    function test_getApproved_whenNoApprovedAddress_itReturnsZeroAddress()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter); // peter owns tokenId 0
+
+        // fire
+        address approvedAddress = basicNft.getApproved(0);
+
+        assertEq(approvedAddress, address(0), "approvedAddress should be zero");
+    }
+    // --------------------------------
 }
 
 contract SmartContract {

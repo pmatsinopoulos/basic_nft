@@ -14,8 +14,6 @@ contract BasicNft {
     mapping(uint256 _tokenId => address _nftOwner) private s_owners;
     mapping(address _nftOwner => mapping(address _operator => bool _approvedFlag))
         private s_approvalsForAll;
-    mapping(address _nftOwner => mapping(address _approvedAddress => mapping(uint256 _tokenId => bool _approvedFlag)))
-        private s_approvals;
     mapping(uint256 _tokenId => address _approvedAddress)
         private s_tokenToApprovedAddress;
 
@@ -37,6 +35,10 @@ contract BasicNft {
         address indexed _operator,
         bool _approved
     );
+
+    // ---------------------------
+    // ERRORS
+    // ---------------------------
 
     error OnlyOwnerCanMint(address _caller);
     error OnlyOwnerCanSetFirstFreeTokenId(address _caller);
@@ -206,15 +208,8 @@ contract BasicNft {
         address currentOwner = s_owners[_tokenId];
         bool authorizedOperator = s_approvalsForAll[currentOwner][msg.sender] ==
             true;
-        bool approvedAddress = s_approvals[currentOwner][msg.sender][
-            _tokenId
-        ] == true;
 
-        if (
-            msg.sender != currentOwner &&
-            !authorizedOperator &&
-            !approvedAddress
-        ) {
+        if (msg.sender != currentOwner && !authorizedOperator) {
             revert ApprovalSenderNotOwnerNorAuthorizedOperatorNorApprovedAddress(
                 msg.sender,
                 currentOwner,
@@ -222,7 +217,7 @@ contract BasicNft {
             );
         }
 
-        s_approvals[currentOwner][_approved][_tokenId] = true;
+        s_tokenToApprovedAddress[_tokenId] = _approved;
         emit Approval(currentOwner, _approved, _tokenId);
     }
 
@@ -231,7 +226,10 @@ contract BasicNft {
         // revert TokenGivenIsNotOwned(_tokenId);
         // }
         //
-        // return s_approvals[s_owners[_tokenId]][msg.sender][_tokenId];
+        if (_tokenId >= s_firstFreeTokenId) {
+            revert InvalidNft(_tokenId);
+        }
+
         return s_tokenToApprovedAddress[_tokenId];
     }
 
@@ -289,9 +287,7 @@ contract BasicNft {
 
         bool authorizedOperator = s_approvalsForAll[currentOwner][msg.sender] ==
             true;
-        bool approvedAddress = s_approvals[currentOwner][msg.sender][
-            _tokenId
-        ] == true;
+        bool approvedAddress = s_tokenToApprovedAddress[_tokenId] == msg.sender;
 
         if (
             msg.sender != currentOwner &&
