@@ -187,12 +187,9 @@ contract BasicNftTest is Test {
         // fire
         vm.expectRevert(
             abi.encodeWithSelector(
-                BasicNft
-                    .SenderNotOwnerNorAuthorizedOperatorNorApprovedAddress
-                    .selector,
-                address(this),
-                panos,
+                BasicNft.NftIsNotOwnedByGivenAddress.selector,
                 peter,
+                panos,
                 0
             )
         );
@@ -341,12 +338,9 @@ contract BasicNftTest is Test {
         // fire
         vm.expectRevert(
             abi.encodeWithSelector(
-                BasicNft
-                    .SenderNotOwnerNorAuthorizedOperatorNorApprovedAddress
-                    .selector,
-                address(this),
-                panos,
+                BasicNft.NftIsNotOwnedByGivenAddress.selector,
                 peter,
+                panos,
                 0
             )
         );
@@ -527,6 +521,8 @@ contract BasicNftTest is Test {
         emit BasicNft.Transfer(peter, panos, tokenId);
         vm.prank(peter);
         basicNft.transferFrom(peter, panos, tokenId);
+
+        // TODO: We need to check for the Approval event that will reset approval to none
     }
 
     function test_transferFrom_whenMsgSenderIsNotCurrentOwnerNeitherAuthorizedOperatorNorApprovedAddress_itReverts()
@@ -541,12 +537,9 @@ contract BasicNftTest is Test {
         // fire
         vm.expectRevert(
             abi.encodeWithSelector(
-                BasicNft
-                    .SenderNotOwnerNorAuthorizedOperatorNorApprovedAddress
-                    .selector,
-                address(this),
-                panos,
+                BasicNft.NftIsNotOwnedByGivenAddress.selector,
                 peter,
+                panos,
                 0
             )
         );
@@ -619,6 +612,106 @@ contract BasicNftTest is Test {
         basicNft.transferFrom(peter, panos, 1);
     }
     // -------------------------------
+
+    // -------------------------------
+    // Test approve()
+
+    function test_approve_whenMsgSenderIsNotCurrentNftOwner_itReverts() public {
+        // setup
+        address notNftOwner = makeAddr("paul");
+        uint256 tokenId = 0;
+        address approvedAddress = makeAddr("approvedAddress");
+        address nftOwner = makeAddr("nftOwner");
+        basicNft.mintNft(nftOwner); // nftOwner owns tokenId 0
+
+        // fire
+        vm.prank(notNftOwner);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                BasicNft
+                    .ApprovalSenderNotOwnerNorAuthorizedOperatorNorApprovedAddress
+                    .selector,
+                address(notNftOwner),
+                address(nftOwner),
+                0
+            )
+        );
+        basicNft.approve(approvedAddress, tokenId);
+    }
+
+    function test_approve_whenSenderIsCurrentOwner_approvesAndEmitsEvent()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        address approvedAddress = makeAddr("approvedAddress");
+        basicNft.mintNft(peter);
+        uint256 tokenId = 0;
+
+        // fire
+        vm.expectEmit(true, true, true, false, address(basicNft));
+        emit BasicNft.Approval(peter, approvedAddress, tokenId);
+        vm.prank(peter);
+        basicNft.approve(approvedAddress, tokenId);
+    }
+
+    function test_approve_whenMsgSenderIsAuthorizedOperator_approvesAndEmitsEvent()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter); // peter owns tokenId 0
+        address panos = makeAddr("panos");
+        address authorizedOperator = makeAddr("authorizedOperator");
+        vm.prank(peter);
+        basicNft.setApprovalForAll(authorizedOperator, true);
+
+        // fire
+        vm.expectEmit(true, true, true, false, address(basicNft));
+        emit BasicNft.Approval(peter, panos, 0);
+
+        vm.prank(authorizedOperator);
+        basicNft.approve(panos, 0);
+    }
+
+    function test_approve_whenMsgSenderIsAnApprovedAddress_approvesAndEmitsEvent()
+        public
+    {
+        // setup
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter); // peter owns tokenId 0
+
+        address panos = makeAddr("panos");
+        address approvedAddress = makeAddr("approvedAddress");
+        vm.prank(peter);
+        basicNft.approve(approvedAddress, 0);
+
+        // fire
+        vm.expectEmit(true, true, true, false, address(basicNft));
+        emit BasicNft.Approval(peter, panos, 0);
+        vm.prank(approvedAddress);
+        basicNft.approve(panos, 0);
+    }
+
+    function test_approve_whenZeroAddress_itMeansThereIsNoApprovedAddress()
+        public
+    {
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter); // peter owns tokenId 0
+        basicNft.mintNft(peter); // peter owns tokenId 1
+
+        // setup
+        uint256 tokenId = 1;
+
+        // fire
+        vm.expectEmit(true, true, true, false, address(basicNft));
+        emit BasicNft.Approval(peter, address(0), tokenId);
+        vm.prank(peter);
+        basicNft.approve(address(0), tokenId);
+
+        address approvedAddress = basicNft.getApproved(1);
+        assertEq(approvedAddress, address(0), "approvedAddress is not correct");
+    }
 }
 
 contract SmartContract {

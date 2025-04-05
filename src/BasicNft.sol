@@ -16,12 +16,19 @@ contract BasicNft {
         private s_approvalsForAll;
     mapping(address _nftOwner => mapping(address _approvedAddress => mapping(uint256 _tokenId => bool _approvedFlag)))
         private s_approvals;
+    mapping(uint256 _tokenId => address _approvedAddress)
+        private s_tokenToApprovedAddress;
 
     bytes4 internal constant SAFE_TRANSFER_FROM_SMART_CONTRACT_RETURN_VALUE =
         bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"));
 
     event Transfer(
         address indexed _from,
+        address indexed _to,
+        uint256 indexed _tokenId
+    );
+    event Approval(
+        address indexed _owner,
         address indexed _to,
         uint256 indexed _tokenId
     );
@@ -38,8 +45,18 @@ contract BasicNft {
         address _to,
         uint256 _tokenId
     );
+    error ApprovalSenderNotOwnerNorAuthorizedOperatorNorApprovedAddress(
+        address _notNftOwner,
+        address _nftOwner,
+        uint256 _tokenId
+    );
     error TransferToAddressZeroNotAllowed();
     error InvalidNft(uint256 _tokenId);
+    error NftIsNotOwnedByGivenAddress(
+        address _currentOwner,
+        address _from,
+        uint256 _tokenId
+    );
     error TransferToSmartContractFailed(address _to);
     error TransferToSmartContractWrongDataReturned(
         address _to,
@@ -173,8 +190,44 @@ contract BasicNft {
     }
 
     function approve(address _approved, uint256 _tokenId) external {
-        s_approvals[msg.sender][_approved][_tokenId] = true;
-        // emit Approval(msg.sender, _approved, _tokenId);
+        // if (_to == address(0)) {
+        //     revert TransferToAddressZeroNotAllowed();
+        // }
+
+        // if (_tokenId >= s_firstFreeTokenId) {
+        //     revert InvalidNft(_tokenId);
+        // }
+
+        address currentOwner = s_owners[_tokenId];
+        bool authorizedOperator = s_approvalsForAll[currentOwner][msg.sender] ==
+            true;
+        bool approvedAddress = s_approvals[currentOwner][msg.sender][
+            _tokenId
+        ] == true;
+
+        if (
+            msg.sender != currentOwner &&
+            !authorizedOperator &&
+            !approvedAddress
+        ) {
+            revert ApprovalSenderNotOwnerNorAuthorizedOperatorNorApprovedAddress(
+                msg.sender,
+                currentOwner,
+                _tokenId
+            );
+        }
+
+        s_approvals[currentOwner][_approved][_tokenId] = true;
+        emit Approval(currentOwner, _approved, _tokenId);
+    }
+
+    function getApproved(uint256 _tokenId) external view returns (address) {
+        // if (s_owners[_tokenId] == address(0)) {
+        // revert TokenGivenIsNotOwned(_tokenId);
+        // }
+        //
+        // return s_approvals[s_owners[_tokenId]][msg.sender][_tokenId];
+        return s_tokenToApprovedAddress[_tokenId];
     }
 
     // function mintNft() public {}
@@ -217,8 +270,16 @@ contract BasicNft {
         }
 
         address currentOwner = s_owners[_tokenId];
-        bool authorizedOperator = s_approvalsForAll[_from][msg.sender] == true;
-        bool approvedAddress = s_approvals[_from][msg.sender][_tokenId] == true;
+
+        if (currentOwner != _from) {
+            revert NftIsNotOwnedByGivenAddress(currentOwner, _from, _tokenId);
+        }
+
+        bool authorizedOperator = s_approvalsForAll[currentOwner][msg.sender] ==
+            true;
+        bool approvedAddress = s_approvals[currentOwner][msg.sender][
+            _tokenId
+        ] == true;
 
         if (
             msg.sender != currentOwner &&
