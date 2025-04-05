@@ -20,16 +20,22 @@ contract BasicNft {
     bytes4 internal constant SAFE_TRANSFER_FROM_SMART_CONTRACT_RETURN_VALUE =
         bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"));
 
+    // ---------------------------
+    // EVENTS
+    // ---------------------------
+
     event Transfer(
         address indexed _from,
         address indexed _to,
         uint256 indexed _tokenId
     );
+
     event Approval(
         address indexed _owner,
         address indexed _to,
         uint256 indexed _tokenId
     );
+
     event ApprovalForAll(
         address indexed _owner,
         address indexed _operator,
@@ -41,30 +47,42 @@ contract BasicNft {
     // ---------------------------
 
     error OnlyOwnerCanMint(address _caller);
+
     error OnlyOwnerCanSetFirstFreeTokenId(address _caller);
+
     error OnlyOwnerCanSetAllNftsMintedValue(address _caller);
+
     error AddressZeroNotAllowedToOwnNft();
+
     error NoMoreNftsLeftToMint();
+
     error TokenGivenIsNotOwned(uint256 _tokenId);
+
     error SenderNotOwnerNorAuthorizedOperatorNorApprovedAddress(
         address _sender,
         address _from,
         address _to,
         uint256 _tokenId
     );
+
     error ApprovalSenderNotOwnerNorAuthorizedOperatorNorApprovedAddress(
         address _notNftOwner,
         address _nftOwner,
         uint256 _tokenId
     );
+
     error TransferToAddressZeroNotAllowed();
+
     error InvalidNft(uint256 _tokenId);
+
     error NftIsNotOwnedByGivenAddress(
         address _currentOwner,
         address _from,
         uint256 _tokenId
     );
+
     error TransferToSmartContractFailed(address _to);
+
     error TransferToSmartContractWrongDataReturned(
         address _to,
         bytes4 _returnedValue

@@ -826,6 +826,50 @@ contract BasicNftTest is Test {
         assertEq(approvedAddress, address(0), "approvedAddress should be zero");
     }
     // --------------------------------
+
+    // --------------------------------
+    // Test isApprovedForAll()
+
+    function test_isApprovedForAll_whenOperatorIsApproved_itReturnsTrue()
+        public
+    {
+        // setup
+        address operator = makeAddr("operator");
+        address nftOwner = makeAddr("nftOwner");
+        vm.prank(nftOwner);
+        basicNft.setApprovalForAll(operator, true);
+
+        // fire
+        bool isApprovedForAll = basicNft.isApprovedForAll(nftOwner, operator);
+        assertTrue(isApprovedForAll, "isApprovedForAll should be true");
+    }
+
+    function test_isApprovedForAll_whenOperatorIsNotApproved_itReturnsFalse()
+        public
+    {
+        // setup
+        address operator = makeAddr("operator");
+        address nftOwner = makeAddr("nftOwner");
+        vm.prank(nftOwner);
+        basicNft.setApprovalForAll(operator, false);
+
+        // fire
+        bool isApprovedForAll = basicNft.isApprovedForAll(nftOwner, operator);
+        assertFalse(isApprovedForAll, "isApprovedForAll should be false");
+    }
+
+    function test_isApprovedForAll_whenOperatorIsNotApprovedNeitherApproved_itReturnsFalse()
+        public
+    {
+        // setup
+        address operator = makeAddr("operator");
+        address nftOwner = makeAddr("nftOwner");
+
+        // fire
+        bool isApprovedForAll = basicNft.isApprovedForAll(nftOwner, operator);
+        assertFalse(isApprovedForAll, "isApprovedForAll should be false");
+    }
+    // --------------------------------
 }
 
 contract SmartContract {
