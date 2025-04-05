@@ -712,6 +712,77 @@ contract BasicNftTest is Test {
         address approvedAddress = basicNft.getApproved(1);
         assertEq(approvedAddress, address(0), "approvedAddress is not correct");
     }
+
+    //--------------------------------
+    // Test setApprovalForAll()
+
+    function test_setApprovalForAll_whenTrue_itSetsTheOperatorAsApprovedForAllNftsOfMsgCaller()
+        public
+    {
+        // setup
+        address operator = makeAddr("operator");
+        address nftOwner = makeAddr("nftOwner");
+        basicNft.mintNft(nftOwner); // nftOwner owns tokenId 0
+
+        // fire
+        vm.expectEmit(true, true, false, true, address(basicNft));
+        emit BasicNft.ApprovalForAll(nftOwner, operator, true);
+        vm.prank(nftOwner);
+        basicNft.setApprovalForAll(operator, true);
+
+        bool isApproved = basicNft.isApprovedForAll(nftOwner, operator);
+        assertTrue(
+            isApproved,
+            "isApprovedForAll is not correct. It should be true"
+        );
+    }
+
+    function test_setApprovalForAll_whenFalse_itSetsTheOperatorAsNotApprovedForAllNftsOfMsgCaller()
+        public
+    {
+        // setup
+        address operator = makeAddr("operator");
+        address nftOwner = makeAddr("nftOwner");
+        basicNft.mintNft(nftOwner); // nftOwner owns tokenId 0
+
+        // fire
+        vm.expectEmit(true, true, false, true, address(basicNft));
+        emit BasicNft.ApprovalForAll(nftOwner, operator, false);
+        vm.prank(nftOwner);
+        basicNft.setApprovalForAll(operator, false);
+
+        bool isApproved = basicNft.isApprovedForAll(nftOwner, operator);
+        assertFalse(
+            isApproved,
+            "isApprovedForAll is not correct. It should be false"
+        );
+    }
+
+    function test_setApprovalForAll_canSetFlagForManyOperators() public {
+        // setup
+        address nftOwner = makeAddr("nftOwner");
+        address operator1 = makeAddr("operator1");
+        address operator2 = makeAddr("operator2");
+
+        // fire
+        vm.prank(nftOwner);
+        basicNft.setApprovalForAll(operator1, true);
+        basicNft.setApprovalForAll(operator1, true);
+
+        bool isApproved = basicNft.isApprovedForAll(nftOwner, operator1);
+        assertTrue(
+            isApproved,
+            "isApprovedForAll is not correct. It should be true"
+        );
+
+        isApproved = basicNft.isApprovedForAll(nftOwner, operator2);
+        assertFalse(
+            isApproved,
+            "isApprovedForAll is not correct. It should be false"
+        );
+    }
+
+    // --------------------------------
 }
 
 contract SmartContract {

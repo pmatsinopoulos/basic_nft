@@ -32,6 +32,11 @@ contract BasicNft {
         address indexed _to,
         uint256 indexed _tokenId
     );
+    event ApprovalForAll(
+        address indexed _owner,
+        address indexed _operator,
+        bool _approved
+    );
 
     error OnlyOwnerCanMint(address _caller);
     error OnlyOwnerCanSetFirstFreeTokenId(address _caller);
@@ -186,7 +191,7 @@ contract BasicNft {
 
     function setApprovalForAll(address _operator, bool _approved) external {
         s_approvalsForAll[msg.sender][_operator] = _approved;
-        // emit ApprovalForAll(msg.sender, _operator, _approved);
+        emit ApprovalForAll(msg.sender, _operator, _approved);
     }
 
     function approve(address _approved, uint256 _tokenId) external {
@@ -228,6 +233,13 @@ contract BasicNft {
         //
         // return s_approvals[s_owners[_tokenId]][msg.sender][_tokenId];
         return s_tokenToApprovedAddress[_tokenId];
+    }
+
+    function isApprovedForAll(
+        address _owner,
+        address _operator
+    ) external view returns (bool) {
+        return s_approvalsForAll[_owner][_operator];
     }
 
     // function mintNft() public {}
