@@ -4,8 +4,9 @@ pragma solidity 0.8.27;
 
 // import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC721} from "./IERC721.sol";
+import {IERC165} from "./IERC165.sol";
 
-contract BasicNft is IERC721 {
+contract BasicNft is IERC721, IERC165 {
     uint256 private s_tokenCounter;
     address private s_owner;
     uint256 private s_firstFreeTokenId;
@@ -232,6 +233,13 @@ contract BasicNft is IERC721 {
     // ) public view override returns (string memory) {
     //     _requireOwned(tokenId);
     // }
+
+    function supportsInterface(
+        bytes4 interfaceID
+    ) external pure returns (bool) {
+        return (interfaceID == type(IERC721).interfaceId ||
+            interfaceID == type(IERC165).interfaceId);
+    }
 
     ////////////////////////////////
     //                            //

@@ -5,6 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {console} from "forge-std/console.sol";
 import {BasicNft} from "../src/BasicNft.sol";
 import {IERC721} from "../src/IERC721.sol";
+import {IERC165} from "../src/IERC165.sol";
 
 contract BasicNftTest is Test {
     BasicNft basicNft;
@@ -904,6 +905,47 @@ contract BasicNftTest is Test {
         assertFalse(isApprovedForAll, "isApprovedForAll should be false");
     }
     // --------------------------------
+
+    // --------------------------------
+    // Test supportsInterface()
+
+    // 0x01ffc9a7 is the ERC165 interface id
+    function test_supportsInterface_when0x01ffc9a7_itReturnsTrue() public view {
+        // fire
+        assertTrue(
+            basicNft.supportsInterface(0x01ffc9a7),
+            "contract does not support 'supportsInterface(bytes4)'"
+        );
+        assertTrue(
+            basicNft.supportsInterface(type(IERC165).interfaceId),
+            "contract does not support 'supportsInterface(bytes4)'"
+        );
+    }
+
+    function test_supportsInterface_when0xffffffff_itReturnsFalse()
+        public
+        view
+    {
+        // fire
+        assertFalse(
+            basicNft.supportsInterface(0xffffffff),
+            "contract should not support '0xffffffff'"
+        );
+    }
+
+    // 0x80ac58cd is the ERC721 interface id
+    function test_supportsInterface_when0x80ac58cd_itReturnsTrue() public view {
+        // fire
+        assertTrue(
+            basicNft.supportsInterface(0x80ac58cd),
+            "contract should support '0x80ac58cd' which is the ERC721 interface"
+        );
+        assertTrue(
+            basicNft.supportsInterface(type(IERC721).interfaceId),
+            "contract should support '0x80ac58cd' which is the ERC721 interface"
+        );
+    }
+    // ------------------------------
 }
 
 contract SmartContract {
