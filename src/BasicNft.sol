@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
+
 pragma solidity 0.8.27;
 
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+// import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {IERC721} from "./IERC721.sol";
 
-contract BasicNft {
-    //is ERC721 {
+contract BasicNft is IERC721 {
     uint256 private s_tokenCounter;
     address private s_owner;
     uint256 private s_firstFreeTokenId;
@@ -19,28 +20,6 @@ contract BasicNft {
 
     bytes4 internal constant SAFE_TRANSFER_FROM_SMART_CONTRACT_RETURN_VALUE =
         bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"));
-
-    // ---------------------------
-    // EVENTS
-    // ---------------------------
-
-    event Transfer(
-        address indexed _from,
-        address indexed _to,
-        uint256 indexed _tokenId
-    );
-
-    event Approval(
-        address indexed _owner,
-        address indexed _approved,
-        uint256 indexed _tokenId
-    );
-
-    event ApprovalForAll(
-        address indexed _owner,
-        address indexed _operator,
-        bool _approved
-    );
 
     // ---------------------------
     // ERRORS

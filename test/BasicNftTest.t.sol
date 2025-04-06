@@ -4,6 +4,7 @@ pragma solidity 0.8.27;
 import {Test} from "forge-std/Test.sol";
 import {console} from "forge-std/console.sol";
 import {BasicNft} from "../src/BasicNft.sol";
+import {IERC721} from "../src/IERC721.sol";
 
 contract BasicNftTest is Test {
     BasicNft basicNft;
@@ -108,7 +109,7 @@ contract BasicNftTest is Test {
 
         // fire
         vm.expectEmit(true, true, true, false, address(basicNft));
-        emit BasicNft.Transfer(address(0), peter, 0);
+        emit IERC721.Transfer(address(0), peter, 0);
         basicNft.mintNft(peter);
     }
 
@@ -170,7 +171,7 @@ contract BasicNftTest is Test {
 
         // fire
         vm.expectEmit(true, true, true, false, address(basicNft));
-        emit BasicNft.Transfer(peter, panos, tokenId);
+        emit IERC721.Transfer(peter, panos, tokenId);
         vm.prank(peter);
         basicNft.safeTransferFrom(peter, panos, tokenId);
     }
@@ -209,7 +210,7 @@ contract BasicNftTest is Test {
 
         // fire
         vm.expectEmit(true, true, true, false, address(basicNft));
-        emit BasicNft.Transfer(peter, panos, 0);
+        emit IERC721.Transfer(peter, panos, 0);
 
         vm.prank(authorizedOperator);
         basicNft.safeTransferFrom(peter, panos, 0);
@@ -229,7 +230,7 @@ contract BasicNftTest is Test {
 
         // fire
         vm.expectEmit(true, true, true, false, address(basicNft));
-        emit BasicNft.Transfer(peter, panos, 0);
+        emit IERC721.Transfer(peter, panos, 0);
         vm.prank(approvedAddress);
         basicNft.safeTransferFrom(peter, panos, 0);
     }
@@ -316,7 +317,7 @@ contract BasicNftTest is Test {
 
         // fire
         vm.expectEmit(true, true, true, false, address(basicNft));
-        emit BasicNft.Transfer(peter, panos, tokenId);
+        emit IERC721.Transfer(peter, panos, tokenId);
         vm.prank(peter);
         basicNft.safeTransferFrom(
             peter,
@@ -360,7 +361,7 @@ contract BasicNftTest is Test {
 
         // fire
         vm.expectEmit(true, true, true, false, address(basicNft));
-        emit BasicNft.Transfer(peter, panos, 0);
+        emit IERC721.Transfer(peter, panos, 0);
 
         vm.prank(authorizedOperator);
         basicNft.safeTransferFrom(peter, panos, 0, abi.encode("Hello World"));
@@ -380,7 +381,7 @@ contract BasicNftTest is Test {
 
         // fire
         vm.expectEmit(true, true, true, false, address(basicNft));
-        emit BasicNft.Transfer(peter, panos, 0);
+        emit IERC721.Transfer(peter, panos, 0);
         vm.prank(approvedAddress);
         basicNft.safeTransferFrom(peter, panos, 0, abi.encode("Hello World"));
     }
@@ -518,7 +519,7 @@ contract BasicNftTest is Test {
 
         // fire
         vm.expectEmit(true, true, true, false, address(basicNft));
-        emit BasicNft.Transfer(peter, panos, tokenId);
+        emit IERC721.Transfer(peter, panos, tokenId);
         vm.prank(peter);
         basicNft.transferFrom(peter, panos, tokenId);
 
@@ -559,7 +560,7 @@ contract BasicNftTest is Test {
 
         // fire
         vm.expectEmit(true, true, true, false, address(basicNft));
-        emit BasicNft.Transfer(peter, panos, 0);
+        emit IERC721.Transfer(peter, panos, 0);
 
         vm.prank(authorizedOperator);
         basicNft.transferFrom(peter, panos, 0);
@@ -579,7 +580,7 @@ contract BasicNftTest is Test {
 
         // fire
         vm.expectEmit(true, true, true, false, address(basicNft));
-        emit BasicNft.Transfer(peter, panos, 0);
+        emit IERC721.Transfer(peter, panos, 0);
         vm.prank(approvedAddress);
         basicNft.transferFrom(peter, panos, 0);
     }
@@ -650,7 +651,7 @@ contract BasicNftTest is Test {
 
         // fire
         vm.expectEmit(true, true, true, false, address(basicNft));
-        emit BasicNft.Approval(peter, approvedAddress, tokenId);
+        emit IERC721.Approval(peter, approvedAddress, tokenId);
         vm.prank(peter);
         basicNft.approve(approvedAddress, tokenId);
     }
@@ -668,7 +669,7 @@ contract BasicNftTest is Test {
 
         // fire
         vm.expectEmit(true, true, true, false, address(basicNft));
-        emit BasicNft.Approval(peter, panos, 0);
+        emit IERC721.Approval(peter, panos, 0);
 
         vm.prank(authorizedOperator);
         basicNft.approve(panos, 0);
@@ -718,7 +719,7 @@ contract BasicNftTest is Test {
 
         // fire
         vm.expectEmit(true, true, true, false, address(basicNft));
-        emit BasicNft.Approval(peter, address(0), tokenId);
+        emit IERC721.Approval(peter, address(0), tokenId);
         vm.prank(peter);
         basicNft.approve(address(0), tokenId);
 
@@ -759,7 +760,7 @@ contract BasicNftTest is Test {
 
         // fire
         vm.expectEmit(true, true, false, true, address(basicNft));
-        emit BasicNft.ApprovalForAll(nftOwner, operator, true);
+        emit IERC721.ApprovalForAll(nftOwner, operator, true);
         vm.prank(nftOwner);
         basicNft.setApprovalForAll(operator, true);
 
@@ -780,7 +781,7 @@ contract BasicNftTest is Test {
 
         // fire
         vm.expectEmit(true, true, false, true, address(basicNft));
-        emit BasicNft.ApprovalForAll(nftOwner, operator, false);
+        emit IERC721.ApprovalForAll(nftOwner, operator, false);
         vm.prank(nftOwner);
         basicNft.setApprovalForAll(operator, false);
 
