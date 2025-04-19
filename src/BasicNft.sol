@@ -5,6 +5,7 @@ pragma solidity 0.8.27;
 // import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC721} from "./IERC721.sol";
 import {IERC165} from "./IERC165.sol";
+import {IERC721Metadata} from "./IERC721Metadata.sol";
 
 contract BasicNft is IERC721, IERC165 {
     uint256 private s_tokenCounter;
@@ -78,6 +79,14 @@ contract BasicNft is IERC721, IERC165 {
     //          external          //
     //                            //
     ////////////////////////////////
+
+    function name() external pure returns (string memory) {
+        return "Generic NFT Collection";
+    }
+
+    function symbol() external pure returns (string memory) {
+        return "GNFTC";
+    }
 
     function mintNft(address _to) external {
         if (msg.sender != s_owner) {
@@ -237,8 +246,10 @@ contract BasicNft is IERC721, IERC165 {
     function supportsInterface(
         bytes4 interfaceID
     ) external pure returns (bool) {
-        return (interfaceID == type(IERC721).interfaceId ||
-            interfaceID == type(IERC165).interfaceId);
+        return
+            (interfaceID == type(IERC721).interfaceId ||
+                interfaceID == type(IERC165).interfaceId) ||
+            interfaceID == type(IERC721Metadata).interfaceId;
     }
 
     ////////////////////////////////

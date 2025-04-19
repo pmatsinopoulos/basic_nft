@@ -6,6 +6,7 @@ import {console} from "forge-std/console.sol";
 import {BasicNft} from "../src/BasicNft.sol";
 import {IERC721} from "../src/IERC721.sol";
 import {IERC165} from "../src/IERC165.sol";
+import {IERC721Metadata} from "../src/IERC721Metadata.sol";
 
 contract BasicNftTest is Test {
     BasicNft basicNft;
@@ -945,7 +946,44 @@ contract BasicNftTest is Test {
             "contract should support '0x80ac58cd' which is the ERC721 interface"
         );
     }
+
+    // 0x5b5e139f is the ERC721Metadata interface id
+    function test_supportsInterface_when0x5b5e139f_itReturnsTrue() public view {
+        // fire
+        assertTrue(
+            basicNft.supportsInterface(0x5b5e139f),
+            "contract should support '0x5b5e139f' which is the ERC721Metadata interface"
+        );
+        assertTrue(
+            basicNft.supportsInterface(type(IERC721Metadata).interfaceId),
+            "contract should support '0x5b5e139f' which is the ERC721Metadata interface"
+        );
+    }
+
     // ------------------------------
+
+    // --------------------------------
+    // Test name()
+
+    function test_name_returnsCorrectName() public view {
+        // fire
+        string memory name = basicNft.name();
+
+        assertEq(
+            name,
+            "Generic NFT Collection",
+            "name should be 'Generic NFT Collection' but it is not"
+        );
+    }
+
+    function test_symbol_returnsCorrectSymbol() public view {
+        // fire
+        string memory symbol = basicNft.symbol();
+
+        assertEq(symbol, "GNFTC", "symbol should be 'GNFTC' but it isn't");
+    }
+
+    // --------------------------------
 }
 
 contract SmartContract {
