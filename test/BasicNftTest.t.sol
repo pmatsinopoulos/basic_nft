@@ -124,6 +124,94 @@ contract BasicNftTest is Test {
         assertEq(basicNft.ownerOf(0), peter);
     }
 
+    // ------------------------------------
+    // Test mintNft with metadata
+
+    function test_mintNft_setsAllMetadata() public {
+        address peter = makeAddr("peter");
+        string memory name = "My fantastic picture";
+        string
+            memory description = "My fantastic picture that show a mountain and a lake";
+        string
+            memory imageUri = "https://www.basicnftconnection.net/images/0.jpg";
+
+        // fire
+        basicNft.mintNft(peter, name, description, imageUri);
+
+        string memory nftName = basicNft.tokenName(0);
+        assertEq(nftName, name);
+
+        string memory nftDescription = basicNft.tokenDescription(0);
+        assertEq(nftDescription, description);
+
+        string memory nftImageUri = basicNft.tokenImageUri(0);
+        assertEq(nftImageUri, imageUri);
+
+        BasicNft.NftMetadata memory nftMetadata = basicNft.tokenMetadata(0);
+        assertEq(nftMetadata.name, name);
+        assertEq(nftMetadata.description, description);
+        assertEq(nftMetadata.imageUri, imageUri);
+    }
+
+    // --------------------------------------------------
+    // Metadata: name, description , imageUri for token
+
+    function test_tokenName_returnsTheNameOfTheNft() public {
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter);
+        basicNft.mintNft(peter, "name", "desc", "imageUri");
+
+        // fire
+        string memory name = basicNft.tokenName(0);
+        assertEq(name, "");
+        name = basicNft.tokenName(1);
+        assertEq(name, "name");
+    }
+
+    function test_tokenDescription_returnsTheNameOfTheNft() public {
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter);
+        basicNft.mintNft(peter, "name", "desc", "imageUri");
+
+        // fire
+        string memory description = basicNft.tokenDescription(0);
+        assertEq(description, "");
+        description = basicNft.tokenDescription(1);
+        assertEq(description, "desc");
+    }
+
+    function test_tokenImageUri_returnsTheNameOfTheNft() public {
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter);
+        basicNft.mintNft(peter, "name", "desc", "imageUri");
+
+        // fire
+        string memory imageUri = basicNft.tokenImageUri(0);
+        assertEq(imageUri, "");
+        imageUri = basicNft.tokenImageUri(1);
+        assertEq(imageUri, "imageUri");
+    }
+
+    // -------------------------------
+    // Metadata for a token/nft
+
+    function test_tokenMetadata_returnsTheNameOfTheNft() public {
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter);
+        basicNft.mintNft(peter, "name", "desc", "imageUri");
+
+        // fire
+        BasicNft.NftMetadata memory nftMetadata = basicNft.tokenMetadata(0);
+        assertEq(nftMetadata.name, "");
+        assertEq(nftMetadata.description, "");
+        assertEq(nftMetadata.imageUri, "");
+
+        nftMetadata = basicNft.tokenMetadata(1);
+        assertEq(nftMetadata.name, "name");
+        assertEq(nftMetadata.description, "desc");
+        assertEq(nftMetadata.imageUri, "imageUri");
+    }
+
     // -------------------------------
     // Test ownerOf
 
@@ -976,12 +1064,18 @@ contract BasicNftTest is Test {
         );
     }
 
+    // -------------------------------------
+    // Test symbol()
+
     function test_symbol_returnsCorrectSymbol() public view {
         // fire
         string memory symbol = basicNft.symbol();
 
         assertEq(symbol, "GNFTC", "symbol should be 'GNFTC' but it isn't");
     }
+
+    // -------------------------------------
+    // Test tokenURI()
 
     // --------------------------------
 }

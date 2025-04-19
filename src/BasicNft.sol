@@ -8,6 +8,12 @@ import {IERC165} from "./IERC165.sol";
 import {IERC721Metadata} from "./IERC721Metadata.sol";
 
 contract BasicNft is IERC721, IERC165 {
+    struct NftMetadata {
+        string name;
+        string description;
+        string imageUri;
+    }
+
     uint256 private s_tokenCounter;
     address private s_owner;
     uint256 private s_firstFreeTokenId;
@@ -19,6 +25,7 @@ contract BasicNft is IERC721, IERC165 {
         private s_approvalsForAll;
     mapping(uint256 _tokenId => address _approvedAddress)
         private s_tokenToApprovedAddress;
+    mapping(uint256 _tokenId => NftMetadata _nftMetadata) private s_nftMetadata;
 
     bytes4 internal constant SAFE_TRANSFER_FROM_SMART_CONTRACT_RETURN_VALUE =
         bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"));
@@ -84,32 +91,44 @@ contract BasicNft is IERC721, IERC165 {
         return "Generic NFT Collection";
     }
 
+    function tokenName(uint256 _tokenId) external view returns (string memory) {
+        return s_nftMetadata[_tokenId].name;
+    }
+
+    function tokenDescription(
+        uint256 _tokenId
+    ) external view returns (string memory) {
+        return s_nftMetadata[_tokenId].description;
+    }
+
+    function tokenImageUri(
+        uint256 _tokenId
+    ) external view returns (string memory) {
+        return s_nftMetadata[_tokenId].imageUri;
+    }
+
+    function tokenMetadata(
+        uint256 _tokenId
+    ) external view returns (NftMetadata memory) {
+        return s_nftMetadata[_tokenId];
+    }
+
     function symbol() external pure returns (string memory) {
         return "GNFTC";
     }
 
     function mintNft(address _to) external {
-        if (msg.sender != s_owner) {
-            revert OnlyOwnerCanMint({_caller: msg.sender});
-        }
+        _mintNft(_to);
+    }
 
-        if (s_allNftsMinted) {
-            revert NoMoreNftsLeftToMint();
-        }
-
-        uint256 tokenId = s_firstFreeTokenId;
-
-        s_owners[tokenId] = _to;
-
-        s_balances[_to]++;
-
-        if (s_firstFreeTokenId == type(uint256).max) {
-            s_allNftsMinted = true;
-        } else {
-            s_firstFreeTokenId++;
-        }
-
-        emit Transfer(address(0), _to, tokenId);
+    function mintNft(
+        address _to,
+        string calldata _name,
+        string calldata _description,
+        string calldata _imageUri
+    ) external {
+        uint256 tokenId = _mintNft(_to);
+        s_nftMetadata[tokenId] = NftMetadata(_name, _description, _imageUri);
     }
 
     function setFirstFreeTokenId(uint256 _firstFreeTokenId) external {
@@ -261,6 +280,32 @@ contract BasicNft is IERC721, IERC165 {
     // function _baseURI() internal view virtual returns (string memory) {
     // return "https://foo.bar.com/nfts/dogie/";
     // }
+
+    function _mintNft(address _to) internal returns (uint256) {
+        if (msg.sender != s_owner) {
+            revert OnlyOwnerCanMint({_caller: msg.sender});
+        }
+
+        if (s_allNftsMinted) {
+            revert NoMoreNftsLeftToMint();
+        }
+
+        uint256 tokenId = s_firstFreeTokenId;
+
+        s_owners[tokenId] = _to;
+
+        s_balances[_to]++;
+
+        if (s_firstFreeTokenId == type(uint256).max) {
+            s_allNftsMinted = true;
+        } else {
+            s_firstFreeTokenId++;
+        }
+
+        emit Transfer(address(0), _to, tokenId);
+
+        return tokenId;
+    }
 
     function _isContract(address _addr) internal view returns (bool) {
         uint256 size;
