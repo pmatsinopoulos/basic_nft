@@ -1077,6 +1077,17 @@ contract BasicNftTest is Test {
     // -------------------------------------
     // Test tokenURI()
 
+    function test_tokenURI_returnsUriToERC721MetadataDocument() public {
+        address peter = makeAddr("peter");
+        basicNft.mintNft(peter);
+
+        // fire
+        string memory tokenURI = basicNft.tokenURI(0);
+        assertEq(
+            tokenURI,
+            "https://www.basicnftcollection.net/nfts/0/metadata"
+        );
+    }
     // --------------------------------
 }
 

@@ -3,6 +3,7 @@
 pragma solidity 0.8.27;
 
 // import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IERC721} from "./IERC721.sol";
 import {IERC165} from "./IERC165.sol";
 import {IERC721Metadata} from "./IERC721Metadata.sol";
@@ -111,6 +112,17 @@ contract BasicNft is IERC721, IERC165 {
         uint256 _tokenId
     ) external view returns (NftMetadata memory) {
         return s_nftMetadata[_tokenId];
+    }
+
+    function tokenURI(uint256 _tokenId) external pure returns (string memory) {
+        return
+            string(
+                abi.encodePacked(
+                    "https://www.basicnftcollection.net/nfts/",
+                    Strings.toString(_tokenId),
+                    "/metadata"
+                )
+            );
     }
 
     function symbol() external pure returns (string memory) {
