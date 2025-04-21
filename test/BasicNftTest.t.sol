@@ -1056,11 +1056,16 @@ contract BasicNftTest is Test {
     function test_name_returnsCorrectName() public view {
         // fire
         string memory name = basicNft.name();
+        string memory expectedName = "Generic NFT Collection";
 
         assertEq(
             name,
-            "Generic NFT Collection",
+            expectedName,
             "name should be 'Generic NFT Collection' but it is not"
+        );
+        assert(
+            keccak256(abi.encodePacked(name)) ==
+                keccak256(abi.encodePacked(expectedName))
         );
     }
 
