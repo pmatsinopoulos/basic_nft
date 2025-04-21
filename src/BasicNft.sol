@@ -144,6 +144,10 @@ contract BasicNft is IERC721, IERC165 {
         return "GNFTC";
     }
 
+    // -----------------------------
+    // Mint()
+    //------------------------------
+
     function mintNft(address _to) external {
         _mintNft(_to);
     }
@@ -157,6 +161,8 @@ contract BasicNft is IERC721, IERC165 {
         uint256 tokenId = _mintNft(_to);
         s_nftMetadata[tokenId] = NftMetadata(_name, _description, _imageUri);
     }
+
+    // ----- end of minting functions () ------------
 
     function setFirstFreeTokenId(uint256 _firstFreeTokenId) external {
         if (msg.sender != s_owner) {
