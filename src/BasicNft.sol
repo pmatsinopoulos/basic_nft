@@ -115,6 +115,21 @@ contract BasicNft is IERC721, IERC165 {
     }
 
     function tokenURI(uint256 _tokenId) external pure returns (string memory) {
+        // On IPFS we have stored both the JSON with the metadata
+        // and the Image of the NFT itself.
+        // The IPFS JSON has a URL like this:
+        //   ipfs://<hash-of-json-for-_tokenId>/<_tokenId>
+        // The IPFS image has another URL like this:
+        //   ipfs://<hash-of-image-for_tokenId>
+        //
+        // I have seen contracts in OpenSea that their URI returns an 'ipfs://' URL.
+        //
+        // However, it can be the choice of the user/creator to decide where
+        // they want to save their images as well as the JSON metadata
+        // file.
+        //
+        // Or we can provide a default location and allow users to select.
+        //
         return
             string(
                 abi.encodePacked(
