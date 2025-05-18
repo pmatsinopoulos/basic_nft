@@ -38,9 +38,13 @@ forge script script/DeployBasicNft.s.sol --broadcast \
 ## Deploy MoodNFT in Anvil
 
 ```bash
-forge script script/DeployMoodNft.s.sol --broadcast \
+forge script script/DeployMoodNft.s.sol \
+  --sig "run(string,string)" \
+  './img/sad.svg' \
+  './img/happy.svg' \
   --rpc-url http://127.0.0.1:8545 \
-  --account ANVIL_PRIVATE_KEY_FIRST_ACCOUNT
+  --account ANVIL_PRIVATE_KEY_FIRST_ACCOUNT \
+  --broadcast
 ```
 
 ## Mint MoodNFT in Anvil
