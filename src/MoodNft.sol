@@ -19,10 +19,9 @@ contract MoodNft is ERC721, Ownable {
     error MoodNft__CantFlipMoodIfNotOwner();
 
     constructor(
-        address _owner,
         string memory _sadSvgImageUri,
         string memory _happySvgImageUri
-    ) ERC721("MoodNFT", "MNFT") Ownable(_owner) {
+    ) ERC721("MoodNFT", "MNFT") Ownable(msg.sender) {
         s_sadSvgImageUri = _sadSvgImageUri;
         s_happySvgImageUri = _happySvgImageUri;
     }
