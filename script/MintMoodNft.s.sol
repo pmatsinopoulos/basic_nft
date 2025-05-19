@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import {Script} from "forge-std/Script.sol";
+import {Script, console} from "forge-std/Script.sol";
 import {MoodNft} from "../src/MoodNft.sol";
 
 contract MintMoodNft is Script {
@@ -10,7 +10,9 @@ contract MintMoodNft is Script {
 
         MoodNft moodNft = MoodNft(_moodNft);
 
-        moodNft.mint(_receiver);
+        uint256 tokenId = moodNft.mint(_receiver);
+
+        console.log("tokenId", tokenId);
 
         vm.stopBroadcast();
     }
