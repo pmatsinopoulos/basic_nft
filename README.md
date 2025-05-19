@@ -52,10 +52,24 @@ forge script script/DeployMoodNft.s.sol \
 This will mint the MoodNFT to the first ANVIL account.
 
 ```bash
-forge script script/MintMoodNft.s.sol \
-  --sig "run(address,address)" \
+forge script script/ManageMoodNft.s.sol \
+  --sig "mint(address,address)" \
   0x5FbDB2315678afecb367f032d93F642f64180aa3 \
   0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 \
+  --rpc-url http://127.0.0.1:8545 \
+  --broadcast \
+  --account ANVIL_PRIVATE_KEY_FIRST_ACCOUNT
+```
+
+## Flip MoodNFT in Anvil
+
+This will mint the MoodNFT to the first ANVIL account.
+
+```bash
+forge script script/ManageMoodNft.s.sol \
+  --sig "flipMood(address,uint256)" \
+  0x5FbDB2315678afecb367f032d93F642f64180aa3 \
+  0 \
   --rpc-url http://127.0.0.1:8545 \
   --broadcast \
   --account ANVIL_PRIVATE_KEY_FIRST_ACCOUNT
